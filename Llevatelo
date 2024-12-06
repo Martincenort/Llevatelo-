@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLÉVATELO</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        header { background-color: #4CAF50; color: white; padding: 1em; text-align: center; }
+        main { padding: 1em; }
+        .section { margin: 1em 0; }
+        .button { background-color: #4CAF50; color: white; padding: 0.5em; border: none; cursor: pointer; margin: 0.2em; }
+        .button:hover { background-color: #45a049; }
+        .hidden { display: none; }
+        .product-list { margin-top: 1em; }
+        .product-item { margin: 1em 0; padding: 1em; border: 1px solid #ddd; }
+        .product-item img { max-width: 100px; max-height: 100px; display: block; margin: 0.5em 0; }
+        #search { margin-bottom: 1em; padding: 0.5em; width: 80%; }
+        .product-actions { margin-top: 0.5em; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>LLÉVATELO</h1>
+    </header>
+    <main>
+        <div id="inicio">
+            <h2>¿Iniciar sesión o registrarse?</h2>
+            <button class="button" onclick="mostrarSeccion('registro')">Registrarse</button>
+            <button class="button" onclick="mostrarSeccion('login')">Iniciar Sesión</button>
+        </div>
+
+        <div id="registro" class="hidden">
+            <h2>Registro</h2>
+            <form onsubmit="registrarUsuario(event)">
+                <input type="text" id="nombre" placeholder="Nombre" required><br>
+                <input type="email" id="correoRegistro" placeholder="Correo" required><br>
+                <input type="password" id="passwordRegistro" placeholder="Contraseña" required><br>
+                <button type="submit" class="button">Registrarse</button>
+                <button type="button" class="button" onclick="mostrarSeccion('inicio')">Regresar</button>
+            </form>
+        </div>
+
+        <div id="login" class="hidden">
+            <h2>Iniciar Sesión</h2>
+            <form onsubmit="iniciarSesion(event)">
+                <input type="email" id="correoLogin" placeholder="Correo" required><br>
+                <input type="password" id="passwordLogin" placeholder="Contraseña" required><br>
+                <button type="submit" class="button">Iniciar Sesión</button>
+                <button type="button" class="button" onclick="mostrarSeccion('inicio')">Regresar</button>
+            </form>
+        </div>
+
+        <div id="principal" class="hidden">
+            <h2>Página Principal</h2>
+            <button class="button" onclick="mostrarSeccion('darSegundaVida')">Dar una Segunda Vida</button>
+            <button class="button" onclick="mostrarSeccion('inicio')">Cerrar Sesión</button>
+        </div>
+
+        <div id="darSegundaVida" class="hidden">
+            <h2>Dar una Segunda Vida</h2>
+            <input type="text" id="search" placeholder="Buscar Producto" oninput="filtrarProductos()"><br>
+            <form onsubmit="subirProducto(event)">
+                <input type="text" id="producto" placeholder="Nombre del Producto" required><br>
+                <textarea id="descripcion" placeholder="Descripción" required></textarea><br>
+                <select id="categoria" required>
+                    <option value="tecnologia">Tecnología</option>
+                    <option value="ropa">Ropa y Calzado</option>
+                    <option value="libros">Libros</option>
+                    <option value="videojuegos">Videojuegos</option>
+                </select><br>
+                <input type="file" id="foto" accept="image/*" required><br>
+                <button type="submit" class="button">Subir Producto</button>
+                <button type="button" class="button" onclick="mostrarSeccion('principal')">Regresar</button>
+            </form>
+            <div id="productosSubidos" class="product-list"></div>
+        </div>
+
+        <div id="pago" class="hidden">
+            <h2>Ingrese el Método de Pago</h2>
+            <button class="button" onclick="mostrarPago('tarjeta')">Pago con Tarjeta</button>
+            <button class="button" onclick="mostrarPago('paypal')">Pago con PayPal</button>
+            <button class="button" onclick="mostrarPago('tienda')">Pago en Tienda</button>
+
+            <div id="detallesPago" class="hidden">
+                <h3 id="metodoSeleccionado"></h3>
+                <form id="formPago" onsubmit="procesarPago(event)">
+                    <div id="campoPago"></div>
+                    <button type="submit" class="button">Confirmar Pago</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let usuarios = [];
+        let productos = [];
+
+        function mostrarSeccion(id) {
+            document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function registrarUsuario(event) {
+            event.preventDefault();
+            const nombre = document.getElementById('nombre').value;
+            const correo = document.getElementById('correoRegistro').value;
+            const password = document.getElementById('passwordRegistro').value;
+
+            usuarios.push({ nombre, correo, password });
+            alert('Usuario registrado exitosamente.');
+            mostrarSeccion('inicio');
+        }
+
+        function iniciarSesion(event) {
+            event.preventDefault();
+            const correo = document.getElementById('correoLogin').value;
+            const password = document.getElementById('passwordLogin').value;
+
+            const usuario = usuarios.find(u => u.correo === correo && u.password === password);
+            if (usuario) {
+                alert(`Bienvenido, ${usuario.nombre}`);
+                mostrarSeccion('principal');
+            } else {
+                alert('Credenciales incorrectas.');
+            }
+        }
+
+        function subirProducto(event) {
+            event.preventDefault();
+            const producto = document.getElementById('producto').value;
+            const descripcion = document.getElementById('descripcion').value;
+            const categoria = document.getElementById('categoria').value;
+            const foto = document.getElementById('foto').files[0];
+
+            const reader = new FileReader();
+            reader.onload = function () {
+                productos.push({ producto, descripcion, categoria, imagen: reader.result });
+                mostrarProductos();
+                mostrarSeccion('principal');
+            };
+            reader.readAsDataURL(foto);
+        }
+
+        function mostrarProductos() {
+            const contenedor = document.getElementById('productosSubidos');
+            contenedor.innerHTML = productos.map((p, index) => `
+                <div class="product-item">
+                    <img src="${p.imagen}" alt="${p.producto}">
+                    <strong>${p.producto}</strong><br>
+                    ${p.descripcion}<br>
+                    <em>Categoría: ${p.categoria}</em>
+                    <div class="product-actions">
+                        <button class="button" onclick="mostrarSeccion('pago')">Comprar</button>
+                        <button class="button">Entrar a Subasta</button>
+                        <button class="button">Donar</button>
+                        <button class="button" onclick="eliminarProducto(${index})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function mostrarPago(metodo) {
+            document.getElementById("detallesPago").classList.remove("hidden");
+            document.getElementById("metodoSeleccionado").textContent = "Método de pago seleccionado: " + metodo;
+        }
+
+        function procesarPago(event) {
+            event.preventDefault();
+            alert('Pago procesado correctamente');
+            mostrarSeccion('principal');
+        }
+    </script>
+</body>
+</html>
